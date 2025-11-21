@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map My Vendor - Role Selection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #388e3c;
+            /* Dark Green */
+            --secondary-blue: #1565c0;
+            /* Darker Blue */
+            --accent-orange: #ff9800;
+            /* Orange */
+            --bg-light: #f4f7f6;
+            --text-dark: #333;
+            --card-bg: #ffffff;
+            --shadow-light: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Gradient background inspired by Google/Material */
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            color: var(--text-dark);
+            text-align: center;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 0.1em;
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            max-width: 500px;
+            color: #666;
+        }
+
+        .role-buttons {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .google-button {
+            padding: 15px 35px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+        }
+
+        .google-button.vendor {
+            background-color: var(--primary-green);
+        }
+
+        .google-button.customer {
+            background-color: var(--secondary-blue);
+        }
+
+        .google-button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Map My Vendor</h1>
+        <p>Your real-time guide to local street vendors in Ballari. Choose your role to begin.</p>
+        <div class="role-buttons">
+            <a href="vendor.html" class="google-button vendor">
+                <i class="fas fa-truck-moving"></i> I am a Vendor
+            </a>
+            <a href="customer.html" class="google-button customer">
+                <i class="fas fa-shopping-basket"></i> I am a Customer
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

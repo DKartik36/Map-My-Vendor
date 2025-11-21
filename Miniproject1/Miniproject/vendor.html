@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map My Vendor - Vendor Mode (Ballari)</title>
+
+    <script>const currentRole = 'vendor';</script>
+
+    <style>
+        :root {
+            --primary-green: #388e3c;
+            --secondary-blue: #1976d2;
+            --accent-orange: #ff9800;
+            --bg-light: #f4f7f6;
+            --text-dark: #333;
+            --card-bg: #fff;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            height: 100vh;
+            overflow: hidden;
+            display: flex
+        }
+
+        #map {
+            flex-grow: 1;
+            height: 100%;
+            background: #e0e0e0
+        }
+
+        #sidebar {
+            width: 350px;
+            height: 100vh;
+            background: var(--card-bg);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto
+        }
+
+        .google-button {
+            padding: 10px;
+            border-radius: 4px;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            background: var(--secondary-blue);
+            width: 100%;
+            margin-top: 5px;
+            box-sizing: border-box
+        }
+
+        .google-button:hover {
+            opacity: 0.95
+        }
+
+        input[type="text"],
+        input[type="tel"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box
+        }
+
+        .auth-form {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px
+        }
+
+        .switch-btn {
+            margin-top: 10px;
+            background: none;
+            border: none;
+            color: var(--secondary-blue);
+            cursor: pointer;
+            font-size: .9em;
+            text-decoration: underline
+        }
+
+        .switch-btn:hover {
+            color: var(--primary-green)
+        }
+
+        .input-error {
+            border: 2px solid red !important
+        }
+
+        p.error-msg {
+            color: red;
+            font-size: 12px;
+            margin: -6px 0 10px 0;
+            min-height: 16px
+        }
+
+        #menuSelection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+            margin-bottom: 10px
+        }
+
+        .item-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            cursor: pointer;
+            background: #fff;
+            font-size: .9em
+        }
+
+        #requestsPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            max-width: 90vw;
+            /* ensures it fits on small screens */
+            max-height: 85vh;
+            /* ensures it never overflows vertically */
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+
+        @media (max-width:850px) {
+            body {
+                flex-direction: column;
+                overflow-y: auto
+            }
+
+            #map {
+                width: 100%;
+                height: 50vh
+            }
+
+            #sidebar {
+                width: 100%;
+                height: 50vh;
+                box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+                overflow-y: scroll
+            }
+
+
+            #requestsPanel {
+                width: 90vw;
+                max-height: 80vh;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <div id="sidebar">
+        <h2>Vendor Mode</h2>
+
+        <div id="userDisplay" style="padding:10px;margin-bottom:10px;border-bottom:1px solid #eee;display:none;">
+            <p id="userStatus" style="font-size:1em;color:var(--text-dark);margin:0;">Logged in as: <span
+                    id="userNameDisplay" style="font-weight:bold">Guest</span></p>
+        </div>
+
+        <div id="userStatusFallback" style="margin-bottom:15px;font-weight:bold;color:var(--secondary-blue);">Welcome to
+            the field! Please log in.</div>
+
+        <div id="loginPanel">
+            <h3>Welcome to Map My Vendor</h3>
+            <p id="authMessage" style="font-size:.9em;margin-bottom:20px;color:var(--secondary-blue);">Please Register
+                or Log In to continue.</p>
+
+            <!-- Register -->
+            <div id="registerForm" class="auth-form">
+                <input type="text" id="registerName" placeholder="Business Name" required />
+                <p id="registerNameError" class="error-msg"></p>
+
+                <input type="tel" id="registerPhone" placeholder="Phone Number (as ID)" required />
+                <p id="registerPhoneError" class="error-msg"></p>
+
+                <input type="password" id="registerPassword" placeholder="Password" pattern="\d+"
+                    title="Password must be digits only" required />
+                <p id="registerPasswordError" class="error-msg"></p>
+
+                <button id="btnRegister" class="google-button" style="background-color:var(--primary-green);"
+                    disabled>Register</button>
+                <button id="switchToLogin" class="switch-btn">Already have an account? Log In</button>
+            </div>
+
+            <!-- Login -->
+            <div id="loginForm" class="auth-form" style="display:none;">
+                <input type="tel" id="loginPhone" placeholder="Phone Number" required />
+                <p id="loginPhoneError" class="error-msg"></p>
+
+                <input type="password" id="loginPassword" placeholder="Password" required />
+                <p id="loginPasswordError" class="error-msg"></p>
+
+                <button id="btnLogin" class="google-button" disabled>Log In</button>
+                <button id="switchToRegister" class="switch-btn">New user? Register</button>
+            </div>
+        </div>
+
+        <div id="vendorControls" style="display:none;">
+            <button id="btnStartSelling" class="google-button">Start Selling (Go Live)</button>
+            <button id="btnEndSelling" class="google-button" style="display:none">End Selling (Go Offline)</button>
+
+            <div class="form-group"
+                style="margin-top:20px;border:1px solid var(--accent-orange);padding:12px;border-radius:8px;background:#fff">
+                <h4>Plan Your Route 🗺️</h4>
+                <input type="text" id="routeStartName" placeholder="Start Location Name (e.g., City Market)">
+                <input type="text" id="routeEndName" placeholder="End Location Name (e.g., Railway Station)">
+                <button id="btnSetRoute" class="google-button" style="background-color:var(--accent-orange)">Set Planned
+                    Route</button>
+            </div>
+
+            <h4>Update Menu</h4>
+            <div id="menuSelection"></div>
+            <button id="btnUpdateMenu" class="google-button">Update Menu</button>
+
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <button id="btnRequests" class="google-button" style="width:50%;">View Customer Requests</button>
+                <button id="btnViewFeedback" class="google-button" style="width:50%;background-color:#5cb85c">View
+                    Feedback</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="requestsPanel" style="display:none;">
+        <h3 style="margin-top:0">Vendor Data Panel</h3>
+        <div id="requestsList"></div>
+        <button onclick="document.getElementById('requestsPanel').style.display='none'"
+            class="google-button">Close</button>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdvOoAv4Q_xL-_v9x5krdg9F1WBsue4v4&loading=async&callback=initMap&libraries=marker"></script>
+
+    <!-- Validation script (Business name + strict Indian phone) -->
+    <script>
+        (function () {
+            function isValidName(v) {
+                return /^[A-Za-z\s]+$/.test(v.trim());
+            }
+            function formatPhone(v) {
+                return v.replace(/\D/g, '').slice(0, 10);
+            }
+            function isValidPhone(v) {
+                return /^[6-9]\d{9}$/.test(v);
+            }
+
+            const registerName = document.getElementById('registerName');
+            const registerPhone = document.getElementById('registerPhone');
+            const registerPassword = document.getElementById('registerPassword');
+            const btnRegister = document.getElementById('btnRegister');
+
+            const regNameErr = document.getElementById('registerNameError');
+            const regPhoneErr = document.getElementById('registerPhoneError');
+            const regPassErr = document.getElementById('registerPasswordError');
+
+            const loginPhone = document.getElementById('loginPhone');
+            const loginPassword = document.getElementById('loginPassword');
+            const btnLogin = document.getElementById('btnLogin');
+
+            const loginPhoneErr = document.getElementById('loginPhoneError');
+            const loginPassErr = document.getElementById('loginPasswordError');
+
+            registerName.addEventListener('input', function () {
+                const v = registerName.value;
+                if (v.trim() === '') {
+                    regNameErr.textContent = '';
+                    registerName.classList.remove('input-error');
+                } else if (!isValidName(v)) {
+                    regNameErr.textContent = 'Business name should contain letters and spaces only.';
+                    registerName.classList.add('input-error');
+                } else {
+                    regNameErr.textContent = '';
+                    registerName.classList.remove('input-error');
+                }
+                updateRegisterState();
+            });
+
+            registerPhone.addEventListener('input', function () {
+                const formatted = formatPhone(registerPhone.value);
+                if (registerPhone.value !== formatted) registerPhone.value = formatted;
+                if (registerPhone.value.length === 0) {
+                    regPhoneErr.textContent = '';
+                    registerPhone.classList.remove('input-error');
+                } else if (!/^[6-9]/.test(registerPhone.value)) {
+                    regPhoneErr.textContent = 'Phone must start with 6,7,8 or 9.';
+                    registerPhone.classList.add('input-error');
+                } else if (registerPhone.value.length < 10) {
+                    regPhoneErr.textContent = 'Phone must be exactly 10 digits.';
+                    registerPhone.classList.add('input-error');
+                } else {
+                    regPhoneErr.textContent = '';
+                    registerPhone.classList.remove('input-error');
+                }
+                updateRegisterState();
+            });
+
+            registerPassword.addEventListener('input', function () {
+                if (registerPassword.value.trim() === '') {
+                    regPassErr.textContent = '';
+                    registerPassword.classList.remove('input-error');
+                } else {
+                    regPassErr.textContent = '';
+                    registerPassword.classList.remove('input-error');
+                }
+                updateRegisterState();
+            });
+
+            loginPhone.addEventListener('input', function () {
+                const formatted = formatPhone(loginPhone.value);
+                if (loginPhone.value !== formatted) loginPhone.value = formatted;
+                if (loginPhone.value.length === 0) {
+                    loginPhoneErr.textContent = '';
+                    loginPhone.classList.remove('input-error');
+                } else if (!/^[6-9]/.test(loginPhone.value)) {
+                    loginPhoneErr.textContent = 'Phone must start with 6,7,8 or 9.';
+                    loginPhone.classList.add('input-error');
+                } else if (loginPhone.value.length < 10) {
+                    loginPhoneErr.textContent = 'Phone must be exactly 10 digits.';
+                    loginPhone.classList.add('input-error');
+                } else {
+                    loginPhoneErr.textContent = '';
+                    loginPhone.classList.remove('input-error');
+                }
+                updateLoginState();
+            });
+
+            loginPassword.addEventListener('input', function () {
+                if (loginPassword.value.trim() === '') {
+                    loginPassErr.textContent = '';
+                    loginPassword.classList.remove('input-error');
+                } else {
+                    loginPassErr.textContent = '';
+                    loginPassword.classList.remove('input-error');
+                }
+                updateLoginState();
+            });
+
+            function updateRegisterState() {
+                const nameOk = isValidName(registerName.value.trim());
+                const phoneOk = isValidPhone(registerPhone.value);
+                const passOk = registerPassword.value.trim().length > 0;
+                btnRegister.disabled = !(nameOk && phoneOk && passOk);
+            }
+            function updateLoginState() {
+                const phoneOk = isValidPhone(loginPhone.value);
+                const passOk = loginPassword.value.trim().length > 0;
+                btnLogin.disabled = !(phoneOk && passOk);
+            }
+
+            updateRegisterState();
+            updateLoginState();
+
+            btnRegister.addEventListener('click', function (e) {
+                if (btnRegister.disabled) {
+                    e.preventDefault();
+                    if (!isValidName(registerName.value.trim())) registerName.classList.add('input-error');
+                    if (!isValidPhone(registerPhone.value)) registerPhone.classList.add('input-error');
+                    if (registerPassword.value.trim() === '') registerPassword.classList.add('input-error');
+                } else {
+                    // allow your script.js to handle register
+                }
+            });
+
+            btnLogin.addEventListener('click', function (e) {
+                if (btnLogin.disabled) {
+                    e.preventDefault();
+                    if (!isValidPhone(loginPhone.value)) loginPhone.classList.add('input-error');
+                    if (loginPassword.value.trim() === '') loginPassword.classList.add('input-error');
+                } else {
+                    // allow your script.js to handle login
+                }
+            });
+
+            document.getElementById('switchToLogin').addEventListener('click', function () {
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+            });
+            document.getElementById('switchToRegister').addEventListener('click', function () {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+            });
+        })();
+    </script>
+</body>
+
+</html>
